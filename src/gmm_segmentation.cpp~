@@ -1,0 +1,235 @@
+/****************************************************************************
+* 
+*  Computer Vision, Fall 2011
+*  New York University
+*
+*  Created by Otavio Braga (obraga@cs.nyu.edu)
+*
+****************************************************************************/
+
+#include <assert.h>
+#include <iostream>
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "gmm_segmentation.h"
+#include "kmeans_segmentation.h"
+
+#ifndef M_PI
+#define M_PI 3.141592653589
+#endif
+
+using namespace std;
+
+double gaussian(double x, double mu, double sigma)
+{
+    double a = (x-mu);
+    double sigma2 = sigma*sigma;
+    return (1.0/sqrt(2*M_PI*sigma2))*exp(-a*a/(2*sigma2));
+
+    // return value is Gaussian Function
+	// f(n) = (a * e)*exp(-(x-b)/(c))
+}
+
+void cal_sigma(unsigned short *depthimage,
+				bool *foreground,
+				double *mu_f,	
+				double *mu_b,
+				double *sigma_f,
+				double *sigma_b,
+				int npts)
+{
+	double count_f, count_b;
+	count_f = count_b = 0;
+	double sum_f, sum_b;
+	sum_f = sum_b = 0;
+
+	for(int i=0; i<npts; i++){
+		if(depthimage[i] !=0){
+			if(foreground[i]){
+				count_f++;
+				sum_f += pow(*mu_f - depthimage[i], 2);
+			}else{
+				count_b++;
+				sum_b += pow(*mu_b - depthimage[i], 2);
+			}
+		}
+	}
+
+	if(count_f != 0)
+		*sigma_f = sqrt(sum_f/count_f);
+	else
+		*sigma_f = 0.1;
+
+	if(count_b != 0)
+		*sigma_b = sqrt(sum_b/count_b);
+	else
+		*sigma_b = 0.1;
+}		
+				
+float gaussian_mixture_segmentation(unsigned short *depthimage,
+                                    int npts,
+                                    float *gamma,
+                                    bool *foreground,
+                                    double *mu1, double *sigma1,
+                                    double *mu2, double *sigma2,
+                                    double *p)
+{
+    // !!!!!!!!!!!!!!!!!!!! Implement this !!!!!!!!!!!!!!!!!!!!
+
+	// p : probability(weight) of the first group
+
+	// Initialization
+	unsigned short min, max, medium;
+	double sum_b, sum_f;
+	double pre_mu1, pre_mu2;
+	double count_b, count_f;
+	bool is_changed;
+	double pro_1, pro_2;
+
+	sum_b = sum_f = 0.0;
+	pre_mu1 = *mu1;
+	pre_mu2 = *mu2;
+	count_b = count_f = 0;
+	is_changed = true;
+	pro_1 = pro_2 = 0.0;
+	
+	for(int i=0; i<npts; i++){
+		gamma[i] = 0.5;
+	}
+
+	// Search Minimum, Maximum in depthimage.
+	for(int i=0; i<npts; i++){
+		if(depthimage[i] != 0){
+			min = max = depthimage[i];
+			break;
+		}
+	}
+
+	for(int i=0; i<npts; i++){
+		if(depthimage[i] != 0){
+			if(depthimage[i] <= min)
+				min = depthimage[i];
+			else if(depthimage[i] >= max)
+				max = depthimage[i];
+		}
+	}	
+
+	medium = (min + max) / 2;
+	
+	// Initialize group1 and group2
+	for(int i=0; i<npts; i++){
+		if(depthimage[i] == 0)
+			continue;
+		else if(depthimage[i] < medium){
+			sum_f += depthimage[i];
+			count_f++;
+			foreground[i] = true;
+		}
+		else{
+			sum_b += depthimage[i];
+			count_b++;
+			foreground[i] = false;
+		} 
+	}
+
+	// average of each group
+	*mu1 = sum_f / count_f;
+	*mu2 = sum_b / count_b;
+
+	// probability
+	pro_1 = count_f / (count_f + count_b);
+	pro_2 = count_b / (count_f + count_b);
+	
+	// standard deviation of each group
+	cal_sigma(depthimage, foreground, mu1, mu2, sigma1, sigma2, npts);
+
+	// loop until the 
+	while(is_changed){
+		cout << "while 들어옴 " << endl;
+		// E-Step
+		double sum_gaussians = 0.0, gaussian_f, gaussian_b;
+		for(int i=0; i<npts; i++){
+			if(depthimage[i] != 0){
+				gaussian_f = gaussian(depthimage[i],*mu1,*sigma1) * pro_1;
+				gaussian_b = gaussian(depthimage[i],*mu2,*sigma2) * pro_2;
+				sum_gaussians = gaussian_f + gaussian_b;
+				gamma[1*npts + i] = gaussian_f / sum_gaussians;
+				gamma[0*npts + i] = gaussian_b / sum_gaussians;
+			}
+		}
+
+		// M-Step
+		for(int i=0; i<2; i++){
+			double sum_1 =0.0, sum_2 = 0.0;
+			for(int j=0; j<npts; j++){
+				if(depthimage[j] != 0){
+					sum_1 += gamma[i*npts+j] * depthimage[j];
+					sum_2 += gamma[i*npts+j];	
+				}
+			}
+			if(i==1)
+				*mu1 = sum_1/sum_2;
+			else
+				*mu2 = sum_1/sum_2;
+		}
+
+
+		double temp;
+		if(*mu1 > *mu2){
+			temp = *mu1;
+			*mu1 = *mu2;
+			*mu2 = temp;
+		}
+
+		// calcurate sigma
+		cal_sigma(depthimage, foreground, mu1, mu2, sigma1, sigma2, npts);
+
+		count_b = count_f = 0;
+		// re-devide foreground / background
+		for(int i=0; i<npts; i++){
+			if(depthimage[i] != 0){
+				if(depthimage[i] < *mu1){
+					foreground[i] = true;
+					count_f++;
+				} else if(depthimage[i] > *mu2){
+					foreground[i] = false;
+					count_b++;
+				} else if(gaussian(depthimage[i],*mu1,*sigma1) > gaussian(depthimage[i],*mu2,*sigma2)){
+					foreground[i] = true;
+					count_f++;
+				}else{
+					foreground[i] = false;
+					count_b++;
+				}
+			}
+		}
+
+		// probability
+		pro_1 = count_f / (count_f+count_b);
+		pro_2 = count_b / (count_f+count_b);		
+
+		if(pow(pre_mu1 - *mu1,2)+pow(pre_mu2 - *mu2,2) < 0.1){			
+			is_changed = false;
+		}else{
+			
+			cout << "pre_mu1 : " << pre_mu1 << ", mu1 : " << *mu1 << endl;
+			cout << "pre_mu2 : " << pre_mu2 << ", mu2 : " << *mu2 << endl;
+
+			pre_mu1 = *mu1;
+			pre_mu2 = *mu2;
+		} 				
+	}
+	cout << "while 나옴 " << endl;
+	
+	double threshold = *mu1;
+
+	while(gaussian(threshold,*mu1,*sigma1) > gaussian(threshold,*mu2,*sigma2))
+		threshold += 0.01;
+
+	*p = pro_1;
+
+    return threshold; 
+}
+

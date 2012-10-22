@@ -1,0 +1,23 @@
+/****************************************************************************
+* 
+*  Computer Vision, Fall 2011
+*  New York University
+*
+*  Created by Otavio Braga (obraga@cs.nyu.edu)
+*
+****************************************************************************/
+
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+
+#include "kmeans_color.h"
+
+void k_means_color(unsigned char *rgbImage, int npts, int nclusters,
+                   std::vector<cv::Vec3d> &centroids,
+                   unsigned char *cluster,
+                   unsigned char *mask, unsigned char label)
+{
+    // !!!!!!!!!!!!!!!!!!!! Implement this !!!!!!!!!!!!!!!!!!!!
+    std::cout << "Warning: k_means_color not implemented!\n";
+}

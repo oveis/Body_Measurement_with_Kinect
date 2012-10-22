@@ -1,0 +1,24 @@
+/****************************************************************************
+* 
+*  Computer Vision, Fall 2011
+*  New York University
+*
+*  Created by Otavio Braga (obraga@cs.nyu.edu)
+*
+****************************************************************************/
+
+#ifndef PLANE_POINT_CLOUD_INTERSECT_H
+#define PLANE_POINT_CLOUD_INTERSECT_H
+
+// O, N are the plane origin and normal, respectively.
+// Returns the points in the point cloud within an epsilon distance to the plane.
+// The 2d Poins are the projections of the point cloud points on the plane, in the
+// coordinate system defined by u = (-N.y, N.x, N.z) and v = N x u
+//
+// !!!!!!!!!!!!!!!!!!!! Implement this !!!!!!!!!!!!!!!!!!!!
+void PlanePointCloudIntersect(std::vector<cv::Vec3d> &point_cloud,
+                              cv::Vec3d &O, cv::Vec3d &N, cv::Vec3d &u, cv::Vec3d &v,
+                              std::vector<cv::Vec2d> &intersection,
+				int epsilon);
+
+#endif // PLANE_POINT_CLOUD_INTERSECT_H

@@ -1,0 +1,35 @@
+/****************************************************************************
+* 
+*  Computer Vision, Fall 2011
+*  New York University
+*
+*  Created by Otavio Braga (obraga@cs.nyu.edu)
+*
+****************************************************************************/
+
+#include <math.h>
+#include <iostream>
+
+#include "kmeans_segmentation.h"
+
+using namespace std;
+
+float k_means_segmentation(unsigned short *depthimage,
+                           int npts,
+                           bool *foreground,
+                           double *centroid_fg, double *centroid_bg)
+{
+    // !!!!!!!!!!!!!!!!!!!! Implement this !!!!!!!!!!!!!!!!!!!!
+    std::cout << "Warning: k_means_segmentation not implemented!\n";
+
+    for (int i = 0; i < npts; i++)
+        foreground[i] = true;
+
+    if (centroid_fg)
+        *centroid_fg = 0;
+
+    if (centroid_bg)
+        *centroid_bg = 0;
+
+    return 0.0;
+}

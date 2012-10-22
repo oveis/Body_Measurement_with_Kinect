@@ -1,0 +1,29 @@
+/****************************************************************************
+* 
+*  Computer Vision, Fall 2011
+*  New York University
+*
+*  Created by Otavio Braga (obraga@cs.nyu.edu)
+*
+****************************************************************************/
+
+#include <iostream>
+#include <numeric>
+#include <stdio.h>
+#include <vector>
+
+#include "kmeans_color.h"
+#include "gmm_color.h"
+
+void gmm_color(unsigned char *rgbImage, int npts,
+               std::vector<cv::Vec3d> &mean,
+               std::vector<cv::Matx33d> &cov,
+               std::vector<double> &pi,
+               std::vector<cv::Matx33d> &inv_cov,
+               std::vector<double> &det_cov,
+               unsigned char *cluster,
+               unsigned char *trimap, unsigned char label)
+{
+    // !!!!!!!!!!!!!!!!!!!! Implement this !!!!!!!!!!!!!!!!!!!!
+    std::cout << "Warning: gmm_color not implemented!\n";
+}
